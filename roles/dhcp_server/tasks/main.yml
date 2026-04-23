@@ -1,0 +1,97 @@
+---
+- name: Обновление кеша пакетов
+  apt_rpm:
+    update_cache: true
+
+- name: Установка пакетов DHCP сервера
+  apt_rpm:
+    name:
+      - dhcp-server
+    state: present
+
+- name: Создание пользователя для DDNS
+  command: >
+    samba-tool user create
+    {{ dhcpduser }}
+    --description="Пользователь обновления DNS через DHCP-сервер"
+    --random-password
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  ignore_errors: true
+  no_log: true
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Добавление пользователя в группу DnsAdmins
+  command: >
+    samba-tool group addmembers
+    'DnsAdmins'
+    {{ dhcpduser }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  ignore_errors: true
+  no_log: true
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Включить пользователя {{ dhcpduser }}
+  command: >
+    samba-tool user setexpiry
+    {{ dhcpduser }}
+    --noexpiry
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  ignore_errors: true
+  no_log: true
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Экспорт файла keytab
+  command: >
+    samba-tool domain exportkeytab
+    --principal={{ dhcpduser }}@"{{ ad_realm }}"
+    {{ keytab_export_path }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+  args:
+    creates: "{{ keytab_export_path }}"
+
+- name: Изменение прав на файл kerberos пользователя {{ dhcpduser }}
+  file:
+    path: "{{ keytab_export_path }}"
+    owner: dhcpd
+    group: dhcp
+    mode: '0400'
+
+- name: Развертывание скрипта обновления DNS
+  copy:
+    src: dhcp-dyndns.sh
+    dest: /usr/local/bin/dhcp-dyndns.sh
+    mode: '0755'
+
+- name: Развертывание конфигурации dhcpd.conf
+  template:
+    src: dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+  notify: Restart dhcpd
+  when:
+    - not sysvol_replication | bool
+
+- name: Развертывание конфигурации dhcpd.conf под failover
+  template:
+    src: dhcpd_failover_primary.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+  notify: Restart dhcpd
+  when:
+    - sysvol_replication | bool
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Развертывание конфигурации dhcpd.conf под failover
+  template:
+    src: dhcpd_failover_second.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+  notify: Restart dhcpd
+  when:
+    - sysvol_replication | bool
+    - inventory_hostname == (groups['domain_controllers'] | list)[1]
+
+- name: Отключение chroot для DHCP-сервера
+  shell: /usr/sbin/control dhcpd-chroot disabled
+...

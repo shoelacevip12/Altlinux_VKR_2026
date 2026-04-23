@@ -1,0 +1,10 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Samba Active Directory DC
+  hosts: domain_controllers
+  become: true
+  become_method: su
+  become_user: root
+  roles:
+    - samba_ad_dc
+...

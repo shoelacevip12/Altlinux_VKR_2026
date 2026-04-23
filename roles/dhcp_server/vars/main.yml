@@ -1,0 +1,6 @@
+---
+dhcpduser: dhcpduser
+keytab_export_path: "/etc/dhcp/dhcpduser.keytab"
+lease_time: "172800"
+max_lease_time: "259200"
+...

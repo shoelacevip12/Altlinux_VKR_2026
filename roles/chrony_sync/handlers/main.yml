@@ -1,0 +1,12 @@
+---
+- name: Перезапуск chronyd обработчиком
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+    masked: false
+    daemon_reload: true
+  loop:
+    - chronyd
+  listen: Restart chronyd
+...

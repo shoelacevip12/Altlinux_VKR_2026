@@ -1,0 +1,25 @@
+# Игнорировать всю папку:
+cache/
+.vagrant/
+__pycache__/
+.terraform/
+collections/
+galaxy_cache/
+tmp/
+.vscode/
+
+# игнорировать расширения и файлы:
+passwd
+*.enc
+*.asc
+*.gpg
+*.deb
+authorized_key.json
+.terraform.lock.hcl
+tfplan
+terraform.tfstate
+terraform.tfstate.backup
+!cloud-init.yml
+.terraform.*
+
+# Исключения

@@ -1,0 +1,5 @@
+---
+proxy_pkg:
+  - squid
+  - squid-helpers
+...

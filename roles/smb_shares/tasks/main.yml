@@ -1,0 +1,11 @@
+---
+- name: Регистрация DNS и создание пользователей и групп
+  include_tasks: ad_prerare.yml
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Установка smb файл-сервера
+  include_tasks: smb_install.yml
+  when:
+    - inventory_hostname in groups['file_servers']
+...

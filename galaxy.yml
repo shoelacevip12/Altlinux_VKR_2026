@@ -1,0 +1,33 @@
+---
+namespace: shoelacevip12
+name: ans_vkr_skv
+version: 1.0.0
+readme: README.md
+authors:
+  - Skvortsov Denis shoelacevip12@gmail.com
+description: Для Выпускной Квалификационной Работы "Автоматизация развертывания гибридной сетевой инфраструктуры на базе Ansible с интеграцией в домен Active Directory, прокси-сервером Squid с Kerberos-аутентификацией, DHCP с failover и динамическим обновлением DNS, файловыми серверами SMB и NFS"
+license:
+  - GPL-2.0-or-later
+tags:
+  - linux
+  - samba
+  - active_directory
+  - squid
+  - dhcp
+  - dns
+  - nfs
+  - smb
+  - kerberos
+  - automation
+  - altlinux
+dependencies:
+  community.general: '>=12.0.0'
+repository: https://github.com/shoelacevip12/altlinux_study/tree/main/VKR/7.Ansible_automation
+build_ignore:
+  - '*.log'
+  - '*.retry'
+  - '.git'
+  - '.gitignore'
+  - 'inventory/group_vars/all/vault'
+  - 'va_pa'
+...

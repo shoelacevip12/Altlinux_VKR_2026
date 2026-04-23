@@ -1,0 +1,11 @@
+---
+- name: Регистрация DNS и создание пользователей и групп
+  include_tasks: nfs_ad_prerare.yml
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Установка nfs файл-сервера
+  include_tasks: nfs_install.yml
+  when:
+    - inventory_hostname in groups['file_servers']
+...

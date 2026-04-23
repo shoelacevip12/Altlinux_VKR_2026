@@ -1,0 +1,13 @@
+---
+- name: Перезапуск smb
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+    masked: false
+    daemon_reload: true
+  listen: "перезапуск smb"
+  async: 12
+  poll: 3
+  loop: "{{ smb_services }}"
+...

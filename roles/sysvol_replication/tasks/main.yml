@@ -1,0 +1,105 @@
+---
+- name: Обновление кеша пакетов
+  apt_rpm:
+    update_cache: true
+
+- name: Установка пакетов для стнхронизации
+  apt_rpm:
+    name: "{{ sysvol_pkg }}"
+    state: installed
+
+- name: Генерация SSH-ключей для репликации sysvol
+  openssh_keypair:
+    path: "{{ ssh_sysvol_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+    type: ed25519
+    comment: "rsync SysVol"
+    force: false
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Изменение прав на публичный ключ
+  file:
+    path: "{{ ssh_sysvol_path }}.pub"
+    owner: root
+    group: root
+    mode: '0640'
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Чтение содержимого публичного ключа
+  slurp:
+    src: "{{ ssh_sysvol_path ~'.pub' }}"
+  register: public_key_content
+  changed_when: false
+  delegate_to: "{{ (groups['domain_controllers'] | list)[0] }}"
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[1]
+
+- name: Добавление публичного ключа в authorized_keys
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ public_key_content.content | b64decode }}"
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[1]
+
+- name: создание каталога для конфига Unison
+  file:
+    path: "{{ usnison_dir }}"
+    state: directory
+
+- name: Развертывание конфига Unison
+  template:
+    src: sync_dc2.prf.j2
+    dest: "{{ usnison_dir }}/sync_dc2.prf"
+    mode: '0600'
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Ручной запуск синхронизации rsync
+  command: >
+    /usr/bin/rsync -XAavz
+    --rsh='ssh -p 22 -o StrictHostKeyChecking=accept-new
+    -i {{ ssh_sysvol_path }}'
+    --log-file /var/log/sysvol-sync.log \
+    --delete-after -f"+ */" -f"- *" {{ synchron_path }}
+    root@{{ secondary_dc }}:/var/lib/samba
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Ручной запуск синхронизации unison через ssh-agent
+  shell: >
+    ssh-agent bash -c "ssh-add {{ ssh_sysvol_path }} && /usr/bin/unison sync_dc2"
+  environment:
+    HOME: /root
+  no_log: false
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+  become: true
+  become_user: root
+
+- name: Установка systemd timer для синхронизации
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0775'
+  loop: "{{ sysvol_services }}"
+  notify:
+    - Enable sysvol-sync timer
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Обновление конфигурации systemd
+  systemd:
+    name: "{{ item }}"
+    masked: false
+    daemon_reload: true
+  loop: "{{ sysvol_services }}"
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+...

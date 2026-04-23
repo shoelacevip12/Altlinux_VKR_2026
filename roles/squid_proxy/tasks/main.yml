@@ -1,0 +1,10 @@
+
+- name: Создание групп для Прокси
+  include_tasks: groups_proxy_add.yml
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Установка proxy squid
+  include_tasks: install_squid.yml
+  when:
+    - inventory_hostname in groups['proxy_servers']

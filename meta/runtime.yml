@@ -1,0 +1,26 @@
+---
+requires_ansible: '>=2.12.0'
+plugin_routing:
+  modules:
+    apt_rpm:
+      redirect: community.general.apt_rpm
+action_groups:
+  domain_management:
+    - samba_tool_domain
+    - samba_tool_dns
+    - samba_tool_user
+    - samba_tool_group
+  file_services:
+    - smb_share
+    - nfs_export
+    - file_permissions
+  network_services:
+    - chrony_config
+    - dhcp_config
+    - squid_config
+  system_setup:
+    - hostname_config
+    - dns_resolver
+    - sysctl_config
+    - package_management
+...

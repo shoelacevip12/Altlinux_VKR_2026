@@ -1,0 +1,103 @@
+---
+- name: Provisioning основного домен-контроллера
+  command: >
+    samba-tool domain provision
+    --realm={{ ad_realm }}
+    --domain={{ ad_domain }}
+    --server-role=dc
+    --dns-backend="{{ ad_backend }}"
+    --use-rfc2307
+    --adminpass='{{ ad_admin_password }}'
+    --option="dns forwarder={{ dns_forwarder }}"
+    --option="interfaces= lo {{ primary_iface_name }}"
+    --option="bind interfaces only=yes"
+    --option="dns zone scavenging=yes"
+    --option="allow dns updates=secure only"
+  args:
+    creates: /var/lib/samba/private/sam.ldb
+  no_log: true
+
+- name: Запуск samba AD сервер
+  systemd:
+    name: "{{ item }}"
+    state: started
+    masked: false
+    enabled: true
+  loop: 
+    - samba
+
+- name: Ожидание готовности Samba
+  wait_for:
+    port: 53
+    host: 127.0.0.1
+    timeout: 60
+    delay: 5
+
+- name: Очистка с интервалом обновления 30 дней
+  command: >
+    samba-tool dns zoneoptions
+    {{ inventory_hostname }}
+    {{ ad_workgroup }}
+    --aging=1
+    --refreshinterval={{ dns_refresh }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+
+- name: Создание обратной - PTR зоны
+  command: >
+    samba-tool dns zonecreate
+    {{ inventory_hostname }}
+    {{ ptr_zone }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+
+- name: Добавление записи типа PTR для обратной зоны самого домен контролера
+  command: >
+    samba-tool dns add
+    {{ inventory_hostname }}
+    {{ ptr_zone }}
+    {{ ptr_ip_main_dc }} PTR
+    {{ inventory_hostname }}.{{ ad_workgroup }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+
+- name: Добавление А записи для вторичного контролера
+  command: >
+    samba-tool dns add
+    {{ inventory_hostname }}
+    {{ ad_workgroup }}
+    {{ secondary_dc | upper }}
+    A
+    {{ secondary_dc_ip }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+  when:
+    - sysvol_replication | bool
+
+- name: Добавление записи типа PTR для обратной зоны вторичного домен контролера
+  command: >
+    samba-tool dns add
+    {{ inventory_hostname }}
+    {{ ptr_zone }}
+    {{ ptr_ip_second_dc }} PTR
+    {{ secondary_dc }}.{{ ad_workgroup }}
+    -U'{{ ad_admin_user }}%{{ ad_admin_password }}'
+  no_log: true
+  when:
+    - sysvol_replication | bool
+
+- name: Настройка DNS резолвера основного DC
+  template:
+    src: resolv.conf_dc_main.j2
+    dest: "/etc/net/ifaces/{{ primary_iface_name }}/resolv.conf"
+  notify:
+    - restart network
+    - restart interface
+
+- name: Заменяем настройки Kerberos для клиентского обращение
+  copy:
+    src: "/var/lib/samba/private/krb5.conf"
+    dest: "/etc/krb5.conf"
+    remote_src: true
+    backup: true
+...

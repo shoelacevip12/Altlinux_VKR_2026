@@ -1,0 +1,17 @@
+---
+- name: Базовая подготовка серверов AD
+  include_tasks: base.yml
+  when:
+    - inventory_hostname in groups['domain_controllers']
+
+- name: Развертывание основного домен контролера
+  include_tasks: primary_dc.yml
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[0]
+
+- name: Развертывание вторичного домен контролера
+  include_tasks: second_dc.yml
+  when:
+    - inventory_hostname == (groups['domain_controllers'] | list)[1]
+    - sysvol_replication | bool
+...
