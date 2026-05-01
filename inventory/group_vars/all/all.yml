@@ -21,18 +21,18 @@ file_server: "{{ hostvars[ groups['file_servers'][0] ]['ansible_hostname'] }}"
 #====| ВКЛ\ВЫКЛ ролей |===#
 
 # включаем(true)\выключаем(false) РОЛИ
-base_setup: false
+base_setup: true
 
-chrony_sync: false
+chrony_sync: true
 
-sysvol_replication: false  # на эту переменную завязаны репликации служб AD и DHCP
-samba_ad_dc: false
-dhcp_server: false
+sysvol_replication: true  # на эту переменную завязаны репликации служб AD и DHCP
+samba_ad_dc: true
+dhcp_server: true
 
-smb_shares: false
-nfs_server: false
+smb_shares: true
+nfs_server: true
 
-squid_proxy: false
+squid_proxy: true
 
 tests_vkr: true
 
