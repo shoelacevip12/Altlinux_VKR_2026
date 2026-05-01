@@ -71,9 +71,10 @@
    sshpass \
    nmap \
    python3-module-importlib-resources \
-   python3-module-zip \
-   su-yaml python3-module-jinja2 \
+   python3-module-zipp \
+   python3-module-jinja2 \
    python3-module-jsonobject \
+   git \
    && apt-get autoremove -y
    ```
 
@@ -137,7 +138,7 @@ cd Altlinux_VKR_2026
 Установка зависимости community.general:
 
 ```bash
-ansible-galaxy collection install community.general
+ansible-galaxy collection install community.general ansible.posix
 ```
 
 ## Использование
