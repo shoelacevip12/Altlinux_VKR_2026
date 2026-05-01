@@ -1,0 +1,21 @@
+---
+- name: Проверка proxy доступа выхода в интернет
+  block:
+    - name: Доступ разрешен под пользователем в группе доступа
+      shell: >
+        printf '%s\n' '{{ samba_users.user1.password }}' \
+        | kinit {{ samba_users.user1.name }} \
+        && curl --proxy-negotiate --proxy-user : \
+        -x http://{{ proxy_server }} \
+        https://2ip.ru
+      no_log: true
+
+    - name: Доступ запрещен под пользователем вне группы доступа
+      shell: >
+        printf '%s\n' '{{ samba_users.user2.password }}' \
+        | kinit {{ samba_users.user2.name }} \
+        && curl --proxy-negotiate --proxy-user : \
+        -x http://{{ proxy_server }} \
+        https://2ip.ru
+      no_log: true
+...
