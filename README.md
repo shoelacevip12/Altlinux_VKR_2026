@@ -434,7 +434,7 @@ smb_shares_config:
 printf '%s\n' 'пароль' | kinit samba_u1
 curl --proxy-negotiate --proxy-user : -x http://altsrv1:3128 https://2ip.ru
 
-# Запрещённый пользователь (должен вернуть 407)
+# Запрещённый пользователь (должен вернуть 403)
 printf '%s\n' 'пароль' | kinit samba_u2
 curl --proxy-negotiate --proxy-user : -x http://altsrv1:3128 https://2ip.ru
 ```
