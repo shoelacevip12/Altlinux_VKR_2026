@@ -612,8 +612,8 @@ graph TD
     C --> D[samba_ad_dc: Контроллеры домена]
     D --> E[sysvol_replication: Репликация SysVol]
     D --> F[dhcp_server: DHCP с DDNS]
-    E --> G[smb_shares: Файловый сервер SMB]
-    E --> H[nfs_server: Файловый сервер NFS]
+    D --> G[smb_shares: Файловый сервер SMB]
+    D --> H[nfs_server: Файловый сервер NFS]
     D --> I[squid_proxy: Прокси-сервер]
     G & H & I --> J[tests_vkr: Тестирование]
 ```
