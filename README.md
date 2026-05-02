@@ -615,7 +615,7 @@ graph TD
     D --> G[smb_shares: Файловый сервер SMB]
     D --> H[nfs_server: Файловый сервер NFS]
     D --> I[squid_proxy: Прокси-сервер]
-    G & H & I --> J[tests_vkr: Тестирование]
+    D & G & H & I --> J[tests_vkr: Тестирование]
 ```
 
 **Пошаговый запуск**:
